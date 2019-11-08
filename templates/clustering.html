@@ -1,1 +1,31 @@
-
+<!doctype html>
+<html>
+	<body>
+	<center>
+		<header>
+		<title>Vraj Patel 1001629326</title></header>
+		<br><br>
+			
+		<table border = 1 align="center">
+			<h2>Vraj Patel 1001629326</h2>
+			<h3> Count of Earthquakes is {{counter}} </h3>
+			<tr>
+				<td>LATITUDE</td>
+				<td>LONGITUDE</td>
+				<td>COUNT</td>
+			</tr>
+			{% for i in range(lengthcounter)%}
+			<tr>
+				
+				<td>{{latrange[i]}}</td>
+				<td>{{lonrange[i]}}</td>
+				<td>{{countl[i]}}</td>
+				
+			</tr>
+			{% endfor %}
+			<h2> <a href = "/">Home</a></h2>
+		</table>
+		<br>
+		
+	</body>
+</html>
