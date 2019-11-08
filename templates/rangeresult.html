@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+	<body>
+		<center>
+		<header>
+		<title>Vraj Patel 1001629326</title></header>
+		<br><br>
+		<table border = 1 align="center">
+			<h2>Vraj Patel 1001629326</h2>
+			<h3> Count of Earthquakes is {{count}} </h3>
+			<tr>
+				
+				<td>ID</td>
+				<td>DATE</td>
+				<td>TIME</td>
+				<td>LATITUDE</td>
+				<td>LONGITUDE</td>
+				<td>DEPTH</td>
+				<td>MAG</td>
+				<td>PLACE</td>
+			</tr>
+			{% for row in rows %}
+			<tr>
+				
+				<td>{{row['ID']}}</td>
+				<td>{{row['DATE']}}</td>
+				<td>{{row['TIME']}}</td>
+				<td>{{row['LATITUDE']}}</td>
+				<td>{{row['LONGITUDE']}}</td>
+				<td>{{row['DEPTH']}}</td>
+				<td>{{row['MAG']}}</td>
+				<td>{{row['PLACE']}}</td>
+			</tr>
+			{% endfor %}
+			<h2> <a href = "/">Home</a></h2>
+		</table>
+		<br>
+		
+	</body>
+</html>

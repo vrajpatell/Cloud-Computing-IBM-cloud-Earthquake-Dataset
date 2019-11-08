@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+
+   <body>
+   <center>
+   <h1>Vraj Patel 1001629326</h1>
+   <br>
+   <h3>Search for and count all earthquakes that occurred with a magnitude Entered</h3>
+   <form method="post" align="center" action="/countall">
+		<br><br>
+		Enter Magnitiude<br><br>
+		<input type="text" name="mag" id="mag" >
+		<br><br>
+		<input type="submit" value="Submit">
+		<br>
+	    <h3> <a href = "/">Home</a> </h3>
+	    </form> 
+	   <br><br>
+	 
+
+	 <h3>Search for magnitude quakes for a one week, a range of days or the whole 30 days</h3>
+   	<form method="post" align = "center" action="/getrange">
+		<br><br>
+		Enter Magnitiude-
+		<br><br>
+		<input type="text" name="uppermag" id="uppermag" value="upper value">
+		<br><br>
+		<input type="text" name="lowermag" id="lowermag" value="lower value">
+		<br><br>
+		<br>
+		Select Dates
+		<br><br>
+		<input type="date" name="startdate" id="startdate" value="Start Date">
+		<br><br>
+		<input type="date" name="enddate" id="enddate" value="End date">
+		<br><br>
+		<input type="submit" value="Submit">
+		<br>
+		<br>
+	  <h3> <a href = "/">Home</a> </h3>
+	  </form>
+
+
+	  <br>
+	  <h3>Earthquakes that were near to your location</h3>
+	  <form method="post" align = "center" action="/getdistance">
+		<br><br>
+		Enter Latitude and Longitude
+		<br><br>
+		<input type="text" name="lati" id="lati" value="Latitude">
+		<br><br>
+		<input type="text" name="longi" id="longi" value="Longitude">
+		<br><br>
+		<input type="text" name="dis" id="dis" value="Distance">
+		<input type="submit" value="Submit">
+		<br>
+		<br>
+	  <h3> <a href = "/">Home</a> </h3>
+	  </form>
+
+
+	  <br>
+	  <h3>Total No. of Earthquakes occuring at Day and Night</h3>
+		<form method="post" align="center" action="/night">
+		<br><br>
+		Enter Magnitiude<br><br>
+		<input type="text" name="magni" id="magni" >
+		<br><br>
+		<input type="submit" value="Submit">
+		<br>
+	    <h3> <a href = "/">Home</a> </h3>
+	    </form>
+
+
+		<br>
+		<h3>Find Clusters of data</h3>
+		 <form method="post" align = "center" action="/clustring">
+		<br><br>
+		Enter First Latitude and Longitude
+		<br><br>
+		<input type="text" name="lati1" id="lati1">
+		<br><br>
+		<input type="text" name="long1" id="long1">
+		<br><br>
+		Enter Second Latitude and Longitude
+		<br><br>
+		<input type="text" name="lati2" id="lati2">
+		<br><br>
+		<input type="text" name="long2" id="long2">
+		<br><br>
+		Enter No. of Slabs 
+		<br><br>
+		<input type="text" name="kcul" id="kcul" >
+		<br><br>
+		<input type="submit" value="Submit">
+		<br>
+	    <h3> <a href = "/">Home</a> </h3>
+		<br>
+		
+	  
+	  </form>
+   </body>
+</html>
