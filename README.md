@@ -1,6 +1,6 @@
 # Cloud Computing IBM Cloud Earthquake Dataset
 
-A reconstructed and runnable Flask project for exploring the `all_month.csv` earthquake dataset.
+A runnable Flask project for exploring live USGS earthquake data with a CSV fallback (`all_month.csv`).
 
 This repository now runs locally without IBM DB2 dependencies and provides a web UI for common earthquake analytics tasks.
 
@@ -62,8 +62,34 @@ PORT=8080 python main.py
 
 ## Notes on reconstruction
 
-The original code referenced unavailable IBM Cloud DB credentials and mixed database drivers (`pyodbc`, `ibm_db`) which made it non-runnable as-is. The app is reconstructed to run fully against the included CSV dataset while preserving the original workflows and routes.
+The original code referenced unavailable IBM Cloud DB credentials and mixed database drivers (`pyodbc`, `ibm_db`) which made it non-runnable as-is. The app now attempts to load the USGS live "all month" GeoJSON feed at startup and falls back to the bundled CSV when live data is unavailable, while preserving the original workflows and routes.
 
 ## Quick validation
 
 After starting the app, open `/` and run each form once. You should see table-based results and counts returned by each operation.
+
+## Deploy on Render
+
+Yes — this app can be deployed to Render as a web dashboard.
+
+### Option A: Blueprint deploy (recommended)
+
+1. Push this repo to GitHub.
+2. In Render, click **New +** → **Blueprint**.
+3. Select this repo and deploy. Render will use `render.yaml` and automatically:
+   - install dependencies from `requirements.txt`
+   - run with Gunicorn using `main:app`
+   - expose the dashboard at `/`
+
+### Option B: Manual Web Service
+
+Use these settings if creating a Web Service manually:
+
+- **Environment**: Python
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `gunicorn --bind 0.0.0.0:$PORT main:app`
+
+### Notes
+
+- The app fetches live USGS data at startup; if unavailable it falls back to `all_month.csv`.
+- Keep outbound internet enabled in your Render service so live feed loading can work.
