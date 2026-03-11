@@ -1,2 +1,1 @@
-Flask
-ibm-db
+Flask>=2.3,<4

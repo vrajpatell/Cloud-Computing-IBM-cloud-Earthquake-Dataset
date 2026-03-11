@@ -1,14 +1,69 @@
-# Advance-Database-Systems
-IBM Cloud Platform used for machine learning program on Earthquakes dataset.
+# Cloud Computing IBM Cloud Earthquake Dataset
 
-1.here we will count the number of earthquakes in the given range of Latitude and Longitude.
+A reconstructed and runnable Flask project for exploring the `all_month.csv` earthquake dataset.
 
-2.Search for and count all earthquakes that occurred with a magnitude Entered.
+This repository now runs locally without IBM DB2 dependencies and provides a web UI for common earthquake analytics tasks.
 
-3.Search for magnitude quakes for a one week, a range of days or the whole 30 days.
+## Features
 
-4.Earthquakes that were near to your location by entering latitude and longitude.
+The app supports:
 
-5.Total Number of Earthquakes occuring at Day and Night by Magnitiude entered.
+1. **Magnitude threshold search** – count/list earthquakes above a given magnitude.
+2. **Magnitude + date range search** – filter earthquakes by magnitude band and date interval.
+3. **Distance search** – find earthquakes within a radius (km) from a latitude/longitude point.
+4. **Day vs night count** – estimate local time from longitude and split earthquake counts.
+5. **Grid-based clustering** – count earthquakes per latitude/longitude slab region.
 
-6.Clustering of data by entering two point of latitude and longitude with equivalent number of Slabs.
+## Project structure
+
+- `main.py` – Flask app and analytics logic.
+- `all_month.csv` – source earthquake dataset.
+- `templates/` – HTML pages for input and result views.
+- `requirements.txt` – Python dependencies.
+- `Procfile` / `manifest.yml` – deployment metadata from original project.
+
+## Requirements
+
+- Python 3.10+ (works on modern Python 3 versions)
+- pip
+
+## Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Run locally
+
+```bash
+python main.py
+```
+
+App runs at:
+
+- `http://127.0.0.1:5000`
+
+You can also set a custom port:
+
+```bash
+PORT=8080 python main.py
+```
+
+## Endpoints
+
+- `GET /` – dashboard with all forms.
+- `POST /countall` – magnitude threshold query.
+- `POST /getrange` – magnitude/date range query.
+- `POST /getdistance` – distance query.
+- `POST /night` – day/night split.
+- `POST /clustring` – slab/grid clustering.
+
+## Notes on reconstruction
+
+The original code referenced unavailable IBM Cloud DB credentials and mixed database drivers (`pyodbc`, `ibm_db`) which made it non-runnable as-is. The app is reconstructed to run fully against the included CSV dataset while preserving the original workflows and routes.
+
+## Quick validation
+
+After starting the app, open `/` and run each form once. You should see table-based results and counts returned by each operation.
