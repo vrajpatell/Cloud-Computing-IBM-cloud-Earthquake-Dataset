@@ -67,3 +67,29 @@ The original code referenced unavailable IBM Cloud DB credentials and mixed data
 ## Quick validation
 
 After starting the app, open `/` and run each form once. You should see table-based results and counts returned by each operation.
+
+## Deploy on Render
+
+Yes — this app can be deployed to Render as a web dashboard.
+
+### Option A: Blueprint deploy (recommended)
+
+1. Push this repo to GitHub.
+2. In Render, click **New +** → **Blueprint**.
+3. Select this repo and deploy. Render will use `render.yaml` and automatically:
+   - install dependencies from `requirements.txt`
+   - run with Gunicorn using `main:app`
+   - expose the dashboard at `/`
+
+### Option B: Manual Web Service
+
+Use these settings if creating a Web Service manually:
+
+- **Environment**: Python
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `gunicorn --bind 0.0.0.0:$PORT main:app`
+
+### Notes
+
+- The app fetches live USGS data at startup; if unavailable it falls back to `all_month.csv`.
+- Keep outbound internet enabled in your Render service so live feed loading can work.
