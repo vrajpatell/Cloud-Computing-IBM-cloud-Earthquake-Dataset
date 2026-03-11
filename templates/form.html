@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <body>
+    <center>
+      <h1>Earthquake Analytics Dashboard</h1>
+      <p>Dataset loaded with {{ total }} earthquake rows.</p>
+
+      <h3>Search earthquakes with magnitude greater than value</h3>
+      <form method="post" action="/countall">
+        <input type="text" name="mag" id="mag" placeholder="Minimum magnitude" required>
+        <input type="submit" value="Submit">
+      </form>
+
+      <h3>Search earthquakes by magnitude range and date range</h3>
+      <form method="post" action="/getrange">
+        <input type="text" name="uppermag" id="uppermag" placeholder="Upper magnitude" required>
+        <input type="text" name="lowermag" id="lowermag" placeholder="Lower magnitude" required>
+        <br><br>
+        <input type="date" name="startdate" id="startdate" required>
+        <input type="date" name="enddate" id="enddate" required>
+        <input type="submit" value="Submit">
+      </form>
+
+      <h3>Find earthquakes close to a latitude/longitude</h3>
+      <form method="post" action="/getdistance">
+        <input type="text" name="lati" id="lati" placeholder="Latitude" required>
+        <input type="text" name="longi" id="longi" placeholder="Longitude" required>
+        <input type="text" name="dis" id="dis" placeholder="Distance in km" required>
+        <input type="submit" value="Submit">
+      </form>
+
+      <h3>Count earthquakes during day and night by magnitude</h3>
+      <form method="post" action="/night">
+        <input type="text" name="magni" id="magni" placeholder="Minimum magnitude" required>
+        <input type="submit" value="Submit">
+      </form>
+
+      <h3>Simple clustering by latitude/longitude slabs</h3>
+      <form method="post" action="/clustring">
+        <input type="text" name="lati1" id="lati1" placeholder="Latitude start" required>
+        <input type="text" name="long1" id="long1" placeholder="Longitude start" required>
+        <br><br>
+        <input type="text" name="lati2" id="lati2" placeholder="Latitude end" required>
+        <input type="text" name="long2" id="long2" placeholder="Longitude end" required>
+        <br><br>
+        <input type="text" name="kcul" id="kcul" placeholder="Slab size" required>
+        <input type="submit" value="Submit">
+      </form>
+    </center>
+  </body>
+</html>

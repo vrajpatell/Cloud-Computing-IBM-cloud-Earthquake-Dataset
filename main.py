@@ -1,267 +1,172 @@
-from flask import Flask, render_template, request, redirect
-import os
-import datetime
-import pyodbc
+from __future__ import annotations
+
+import csv
+import datetime as dt
 import math
-import datetime
+import os
+from pathlib import Path
+from typing import Any
+
+from flask import Flask, render_template, request
+
 app = Flask(__name__)
-port = int(os.getenv("PORT", 5000))
-
-server = 'Server name'
-database = 'Db'
-username = 'Name'
-password = 'Password'
-driver= '{ODBC Driver 17 for SQL Server}'
-
-cnxn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';PORT=1443;DATABASE='+database+';UID='+username+';PWD='+ password)
+PORT = int(os.getenv("PORT", 5000))
+DATA_FILE = Path(__file__).with_name("all_month.csv")
 
 
-@app.route('/')
+def _to_float(value: str | None, default: float = 0.0) -> float:
+    try:
+        if value is None or value == "":
+            return default
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _parse_date(value: str) -> dt.date:
+    return dt.datetime.strptime(value, "%m/%d/%Y").date()
+
+
+def _parse_time(value: str) -> dt.time:
+    return dt.datetime.strptime(value, "%H:%M:%S").time()
+
+
+def load_earthquakes() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with DATA_FILE.open(newline="", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for raw in reader:
+            rows.append(
+                {
+                    "ID": raw.get("id", ""),
+                    "DATE": _parse_date(raw.get("date", "1/1/1970")),
+                    "TIME": _parse_time(raw.get("time", "00:00:00")),
+                    "LATITUDE": _to_float(raw.get("latitude")),
+                    "LONGITUDE": _to_float(raw.get("longitude")),
+                    "DEPTH": _to_float(raw.get("depth")),
+                    "MAG": _to_float(raw.get("mag")),
+                    "PLACE": raw.get("place", ""),
+                }
+            )
+    return rows
+
+
+EARTHQUAKES = load_earthquakes()
+
+
+@app.route("/")
 def index():
-    return render_template('form.html')
+    return render_template("form.html", total=len(EARTHQUAKES))
 
 
-# This function will retrieve all data for specific magnitude  
-@app.route('/countall', methods = ['GET','POST'])
-def getnames(name=None):
-    
-    try:
-        if request.method == "POST":
-            mag = request.form['mag']
-            #connect to db
-            conn = ibm_db.connect("DATABASE="+db2cred['db']+";HOSTNAME="+db2cred['hostname']+";PORT="+str(db2cred['port'])+";UID="+db2cred['username']+";PWD="+db2cred['password']+";","","")
-            if conn:
-                print("in if loop")
-                sql='select * from RZG77856.ALL_MONTH where "MAG">?'
-                prep = ibm_db.prepare(conn,sql)
-                ibm_db.bind_param(prep, 1, mag)
-                ibm_db.execute(prep)
-                rows = []
-                count = 0
-                print("conn 2")
-            # fetching the result
-                result = ibm_db.fetch_assoc(prep)
-                while result != False:
-                    count = count + 1
-                    rows.append(result.copy())
-                    result = ibm_db.fetch_assoc(prep)
-            # close database connection
-                ibm_db.close(conn)
-                print("conn 3")
-                return render_template('cresult.html', rows=rows, count=count)
-            else:
-                print("no connection established")
-                return render_template('main.html')
-    except Exception as e:
-        print(e)
-        return "<html><body><p>In Exception</p></body></html>"
- 
- 
-
-#Function for Specified range of magnitudes in given range of days 
-@app.route('/getrange', methods = ['GET','POST'])
-def getrange():  
-    try:
-        if request.method == "POST":
-            uppermag = request.form['uppermag']
-            lowermag = request.form['lowermag']
-            startdate = request.form['startdate']
-            enddate = request.form['enddate']
-            
-            #connect to db
-            conn = ibm_db.connect("DATABASE="+db2cred['db']+";HOSTNAME="+db2cred['hostname']+";PORT="+str(db2cred['port'])+";UID="+db2cred['username']+";PWD="+db2cred['password']+";","","")
-            if conn:
-                print("in if loop")
-                sql='select * from RZG77856.ALL_MONTH where mag between ? and ? and date >=? and date <=?'
-                prep = ibm_db.prepare(conn,sql)
-                ibm_db.bind_param(prep, 1, lowermag)
-                ibm_db.bind_param(prep, 2, uppermag)
-                ibm_db.bind_param(prep, 3, startdate)
-                ibm_db.bind_param(prep, 4, enddate)
-                ibm_db.execute(prep)
-                rows = []
-                count = 0
-                print("conn 2")
-            # fetching the result
-                result = ibm_db.fetch_assoc(prep)
-                print(result)
-                while result != False:
-                    count = count + 1
-                    rows.append(result.copy())
-                    result = ibm_db.fetch_assoc(prep)
-            # close database connection
-                ibm_db.close(conn)
-                print(len(rows))
-                return render_template('rangeresult.html', rows=rows, count=count)
-            else:
-                print("no connection established")
-                return render_template('main.html')
-    except Exception as e:
-        print(e)
-        return "<html><body><p>In Exception</p></body></html>"
+@app.route("/countall", methods=["GET", "POST"])
+def countall():
+    if request.method == "POST":
+        min_mag = _to_float(request.form.get("mag"), 0.0)
+        rows = [row for row in EARTHQUAKES if row["MAG"] > min_mag]
+        return render_template("cresult.html", rows=rows, count=len(rows))
+    return render_template("form.html", total=len(EARTHQUAKES))
 
 
-@app.route('/getdistance', methods = ['GET','POST'])
-def getdistance(name=None):  
-    try:
-        if request.method == "POST":
-            lati = request.form['lati']
-            longi = request.form['longi']
-            dis = request.form['dis']
-            #connect to db
-            conn = ibm_db.connect("DATABASE="+db2cred['db']+";HOSTNAME="+db2cred['hostname']+";PORT="+str(db2cred['port'])+";UID="+db2cred['username']+";PWD="+db2cred['password']+";","","")
-            if conn:
-                print("in if loop")
-                sql='select * from RZG77856.ALL_MONTH'
-                prep = ibm_db.prepare(conn,sql)
-                #ibm_db.bind_param(prep, 1, lati)
-                #ibm_db.bind_param(prep, 2, longi)
-                ibm_db.execute(prep)
-                rows = []
-                r1 = []
-               
-                count = 0
-                distance = 0
-                radius = 6371
-                print("conn 2")
-            # fetching the result
-                result = ibm_db.fetch_assoc(prep)
-                while result != False:  
-                    
-                    rows.append(result.copy())
-                    result = ibm_db.fetch_assoc(prep)    
-            # close database connection
-                ibm_db.close(conn)
-               # for row in rows:
-                #    distance = (float(row['LATITUDE']) - float(lati))**2 + (float(row['LONGITUDE']) - float(longi))**2 
-                 #   d = math.sqrt(distance)*111.2
-                    
-                #    if(d < float(dis)):
-                #        
-                #       count = count + 1
-                #       r1.append(row)
-                
-                for row in rows:
-                    lat1 = float(lati)
-                    lon1 = float(longi)
-                    lat2 = float(row['LATITUDE'])
-                    lon2 = float(row['LONGITUDE'])
-                    dlat = math.radians(lat2 - lat1)
-                    dlon = math.radians(lon2 - lon1)
-                    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                        * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-                    d = radius * c
-                    if(d < float(dis)):
-                        count = count + 1
-                        r1.append(row)
-                print(count)
-                return render_template('distance.html', r1=r1, count = count )
-            else:
-                print("no connection established")
-                return render_template('main.html')
-    except Exception as e:
-        print(e)
-        return "<html><body><p>In Exception</p></body></html>"
+@app.route("/getrange", methods=["POST"])
+def getrange():
+    uppermag = _to_float(request.form.get("uppermag"))
+    lowermag = _to_float(request.form.get("lowermag"))
+    startdate = dt.datetime.strptime(request.form["startdate"], "%Y-%m-%d").date()
+    enddate = dt.datetime.strptime(request.form["enddate"], "%Y-%m-%d").date()
+
+    rows = [
+        row
+        for row in EARTHQUAKES
+        if lowermag <= row["MAG"] <= uppermag and startdate <= row["DATE"] <= enddate
+    ]
+    return render_template("rangeresult.html", rows=rows, count=len(rows))
 
 
-@app.route('/night', methods = ['GET','POST'])
-def night(name=None):  
-         if request.method == "POST":
-            magni = request.form['magni']
-            #connect to db
-            conn = ibm_db.connect("DATABASE="+db2cred['db']+";HOSTNAME="+db2cred['hostname']+";PORT="+str(db2cred['port'])+";UID="+db2cred['username']+";PWD="+db2cred['password']+";","","")
-            if conn:
-                print("in if loop")
-                sql='select * from RZG77856.ALL_MONTH where mag > ? '
-                prep = ibm_db.prepare(conn,sql)
-                ibm_db.bind_param(prep, 1, magni)
-                ibm_db.execute(prep)
-                rows = []
-                N = 0
-                D = 0
-                print("conn 2")
-            # fetching the result
-                result = ibm_db.fetch_assoc(prep)
-                while result != False:  
-                    rows.append(result.copy())
-                    result = ibm_db.fetch_assoc(prep)    
-            # close database connection
-                ibm_db.close(conn)
-                for row in rows:
-                    currtime = row['TIME']
-                    currdate = row['DATE']
-                    longit = float(row['LONGITUDE'])
-                    tdiff = (int(longit*24)/360)
-                    diff = datetime.datetime.combine(currdate, currtime) - datetime.timedelta(hours=tdiff)
-                    if(diff.time().hour < 8 or diff.time().hour > 20):
-                        N = N + 1
-                    else:
-                        D = D + 1
-                  
-                return render_template('daynight.html', N = N, D = D )
-            else:
-                print("no connection established")
-                return render_template('main.html')
-    
-@app.route('/clustring', methods = ['GET','POST'])
-def clustring(name=None):  
-        if request.method == "POST":
-            lati1 = request.form['lati1']
-            long1 = request.form['long1']
-            lati2 = request.form['lati2']
-            long2 = request.form['long2']
-            kcul = request.form['kcul']
-            
-            #latlon = []
-            lati1 = int(float(lati1))
-            lati2 = int(float(lati2))
-            long1 = int(float(long1))
-            long2 = int(float(long2))
-            kcul = int(kcul)
-            
-            #connect to db
-            conn = ibm_db.connect("DATABASE="+db2cred['db']+";HOSTNAME="+db2cred['hostname']+";PORT="+str(db2cred['port'])+";UID="+db2cred['username']+";PWD="+db2cred['password']+";","","")
-            if conn:
-                print("in if loop")
-                latrange = []
-                lonrange = []
-                countl = []
-                counter = 0
-               
-                for i in range(lati1, lati2, -kcul):
-                    print("1st Loop")
-                    for j in range(long1,long2, kcul):
-                        
-                        nolat = i - kcul
-                        nolon = j + kcul
-                        sql='select count(*) from RZG77856.ALL_MONTH where latitude between ? and ? and longitude between ? and ?'
-                        prep = ibm_db.prepare(conn,sql)
-                        ibm_db.bind_param(prep, 1, nolat)
-                        ibm_db.bind_param(prep, 2, i) 
-                        
-                        ibm_db.bind_param(prep, 3, j)
-                        ibm_db.bind_param(prep, 4, nolon)
-                        ibm_db.execute(prep)
-                    
-                        result = ibm_db.fetch_assoc(prep)
-                        
-                        count = result.copy()
-                     
-                        countl.append(int(count['1']))
-                        latrange.append(i)
-                        lonrange.append(j)
-                  
-                ibm_db.close(conn)      
-                lengthcounter = len(latrange)
-                print("outside loop")           
-                return render_template('clustering.html', lengthcounter = lengthcounter, latrange = latrange, lonrange = lonrange, countl = countl )
-            else:
-                print("no connection established")
-                return render_template('main.html')
-    
+@app.route("/getdistance", methods=["POST"])
+def getdistance():
+    lati = _to_float(request.form.get("lati"))
+    longi = _to_float(request.form.get("longi"))
+    max_distance_km = _to_float(request.form.get("dis"))
+
+    radius = 6371.0
+    nearby: list[dict[str, Any]] = []
+    for row in EARTHQUAKES:
+        dlat = math.radians(row["LATITUDE"] - lati)
+        dlon = math.radians(row["LONGITUDE"] - longi)
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(math.radians(lati))
+            * math.cos(math.radians(row["LATITUDE"]))
+            * math.sin(dlon / 2) ** 2
+        )
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = radius * c
+        if distance < max_distance_km:
+            nearby.append(row)
+
+    return render_template("distance.html", r1=nearby, count=len(nearby))
 
 
+@app.route("/night", methods=["POST"])
+def night():
+    min_mag = _to_float(request.form.get("magni"), 0.0)
+    rows = [row for row in EARTHQUAKES if row["MAG"] > min_mag]
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+    day_count = 0
+    night_count = 0
+    for row in rows:
+        tdiff = int(row["LONGITUDE"] * 24 / 360)
+        local_dt = dt.datetime.combine(row["DATE"], row["TIME"]) - dt.timedelta(hours=tdiff)
+        if local_dt.time().hour < 8 or local_dt.time().hour > 20:
+            night_count += 1
+        else:
+            day_count += 1
+
+    return render_template("daynight.html", N=night_count, D=day_count)
+
+
+@app.route("/clustring", methods=["POST"])
+def clustring():
+    lati1 = int(_to_float(request.form.get("lati1")))
+    long1 = int(_to_float(request.form.get("long1")))
+    lati2 = int(_to_float(request.form.get("lati2")))
+    long2 = int(_to_float(request.form.get("long2")))
+    kcul = max(int(_to_float(request.form.get("kcul"), 1.0)), 1)
+
+    lat_step = -kcul if lati1 > lati2 else kcul
+    lon_step = -kcul if long1 > long2 else kcul
+
+    latrange: list[int] = []
+    lonrange: list[int] = []
+    countl: list[int] = []
+
+    for lat in range(lati1, lati2, lat_step):
+        for lon in range(long1, long2, lon_step):
+            next_lat = lat + lat_step
+            next_lon = lon + lon_step
+            lat_low, lat_high = sorted((lat, next_lat))
+            lon_low, lon_high = sorted((lon, next_lon))
+
+            count = sum(
+                1
+                for row in EARTHQUAKES
+                if lat_low <= row["LATITUDE"] <= lat_high
+                and lon_low <= row["LONGITUDE"] <= lon_high
+            )
+            latrange.append(lat)
+            lonrange.append(lon)
+            countl.append(count)
+
+    return render_template(
+        "clustering.html",
+        lengthcounter=len(latrange),
+        latrange=latrange,
+        lonrange=lonrange,
+        countl=countl,
+        counter=sum(countl),
+    )
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=PORT)
