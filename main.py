@@ -2,16 +2,22 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import json
 import math
 import os
 from pathlib import Path
 from typing import Any
+from urllib.error import URLError
+from urllib.request import urlopen
 
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
 PORT = int(os.getenv("PORT", 5000))
 DATA_FILE = Path(__file__).with_name("all_month.csv")
+USGS_ALL_MONTH_URL = (
+    "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson"
+)
 
 
 def _to_float(value: str | None, default: float = 0.0) -> float:
@@ -32,6 +38,45 @@ def _parse_time(value: str) -> dt.time:
 
 
 def load_earthquakes() -> list[dict[str, Any]]:
+    try:
+        return load_live_earthquakes()
+    except (URLError, TimeoutError, ValueError, json.JSONDecodeError):
+        return load_csv_earthquakes()
+
+
+def load_live_earthquakes() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with urlopen(USGS_ALL_MONTH_URL, timeout=15) as response:
+        payload = json.load(response)
+
+    features = payload.get("features", [])
+    for feature in features:
+        properties = feature.get("properties", {})
+        geometry = feature.get("geometry", {})
+        coordinates = geometry.get("coordinates", [0.0, 0.0, 0.0])
+        if len(coordinates) < 3:
+            coordinates = [0.0, 0.0, 0.0]
+
+        event_time = dt.datetime.fromtimestamp(
+            _to_float(properties.get("time")) / 1000,
+            tz=dt.timezone.utc,
+        )
+        rows.append(
+            {
+                "ID": feature.get("id", ""),
+                "DATE": event_time.date(),
+                "TIME": event_time.time().replace(tzinfo=None),
+                "LATITUDE": _to_float(coordinates[1]),
+                "LONGITUDE": _to_float(coordinates[0]),
+                "DEPTH": _to_float(coordinates[2]),
+                "MAG": _to_float(properties.get("mag")),
+                "PLACE": properties.get("place", ""),
+            }
+        )
+    return rows
+
+
+def load_csv_earthquakes() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     with DATA_FILE.open(newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
